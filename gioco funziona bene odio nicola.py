@@ -12,14 +12,14 @@ BULLET_SPEED = 10
 ENEMY_SPEED = 2
 PLAYER_HEALTH = 3
 
-# Sprite assets - Scarica i PNG con questi nomi e mettili in assets/
+
 SPRITE_PLAYER = "assets/player.png"
 SPRITE_DRONE = "assets/drone.png"
 SPRITE_CYBORG = "assets/cyborg.png"
 SPRITE_TURRET = "assets/turret.png"
 SPRITE_BOSS = "assets/boss.png"
 SPRITE_UPGRADE = "assets/upgrade.png"
-SPRITE_BULLET = "assets/bullet.png"  # opzionale, usato solo se vuoi sprite per proiettili
+SPRITE_BULLET = "assets/bullet.png"  # skin dei elementi
 
 
 class CyberpunkGame(arcade.Window):
@@ -102,14 +102,14 @@ class CyberpunkGame(arcade.Window):
         self.player_health = PLAYER_HEALTH
         self.upgrades_collected = []
 
-        # Game stats
+        # le stats
         self.player_speed = PLAYER_SPEED
         self.bullet_speed = BULLET_SPEED
         self.enemy_speed = ENEMY_SPEED
         self.fire_rate = 0.5  # seconds between shots
         self.last_shot = 0
 
-        # Sandevistan
+        # Sandy, rallenta il tempo
         self.sandevistan_active = False
         self.sandevistan_timer = 0
         self.sandevistan_cooldown = 0
@@ -124,7 +124,7 @@ class CyberpunkGame(arcade.Window):
         # Doors (for now, just check if cleared to move)
         self.doors_open = False
 
-        # Room definitions: list of enemy configs
+        #
         self.rooms = [
             [{'x': 200, 'y': 300, 'type': 'drone', 'hp': 1}, {'x': 600, 'y': 400, 'type': 'drone', 'hp': 1}],  # Distretto 1: 2 droni
             [{'x': 100, 'y': 200, 'type': 'turret', 'hp': 1}, {'x': 300, 'y': 500, 'type': 'cyborg', 'hp': 1}, {'x': 500, 'y': 100, 'type': 'drone', 'hp': 1}],  # Distretto 2: torretta, cyborg, drone
@@ -176,7 +176,7 @@ class CyberpunkGame(arcade.Window):
         if self.current_screen != "game":
             return
 
-        # Sandevistan
+        # come funziona il sandevistan
         if self.sandevistan_active:
             self.time_scale = 0.3
             self.sandevistan_timer -= delta_time
@@ -189,7 +189,7 @@ class CyberpunkGame(arcade.Window):
             if self.sandevistan_cooldown > 0:
                 self.sandevistan_cooldown -= delta_time
 
-        # Player movement
+        # movement
         player_speed = self.player_speed if not self.sandevistan_active else self.player_speed / self.time_scale
         if arcade.key.W in self.keys_pressed:
             self.player_sprite.center_y += player_speed
@@ -204,10 +204,10 @@ class CyberpunkGame(arcade.Window):
         self.player_sprite.center_x = max(self.room_left, min(self.room_right, self.player_sprite.center_x))
         self.player_sprite.center_y = max(self.room_bottom, min(self.room_top, self.player_sprite.center_y))
 
-        # Enemy AI
+        # nemici
         for sprite in self.enemy_sprites:
             if sprite.type == 'drone':
-                # Follow player
+                # attacca il giocatore
                 dx = self.player_sprite.center_x - sprite.center_x
                 dy = self.player_sprite.center_y - sprite.center_y
                 dist = (dx**2 + dy**2)**0.5
@@ -215,11 +215,11 @@ class CyberpunkGame(arcade.Window):
                     sprite.center_x += (dx / dist) * self.enemy_speed * self.time_scale
                     sprite.center_y += (dy / dist) * self.enemy_speed * self.time_scale
             elif sprite.type == 'cyborg':
-                # Random movement
+                # casualita
                 sprite.center_x += (arcade.rand_in_range(-1, 1) * self.enemy_speed * self.time_scale)
                 sprite.center_y += (arcade.rand_in_range(-1, 1) * self.enemy_speed * self.time_scale)
             elif sprite.type == 'turret':
-                # Shoot periodically
+                # spara periodicamente
                 if arcade.rand_int(0, 100) < 2:  # 2% chance per frame
                     dx = self.player_sprite.center_x - sprite.center_x
                     dy = self.player_sprite.center_y - sprite.center_y
@@ -233,7 +233,7 @@ class CyberpunkGame(arcade.Window):
                         }
                         self.enemy_bullets.append(bullet)
             elif sprite.type == 'boss':
-                # Boss AI: follow and shoot
+                # Boss 
                 dx = self.player_sprite.center_x - sprite.center_x
                 dy = self.player_sprite.center_y - sprite.center_y
                 dist = (dx**2 + dy**2)**0.5
@@ -249,7 +249,7 @@ class CyberpunkGame(arcade.Window):
                     }
                     self.enemy_bullets.append(bullet)
 
-        # Move bullets
+        # movimento proiettili 
         for bullet in self.bullets[:]:
             bullet['x'] += bullet['dx'] * self.time_scale
             bullet['y'] += bullet['dy'] * self.time_scale
@@ -257,7 +257,7 @@ class CyberpunkGame(arcade.Window):
                 bullet['y'] < 0 or bullet['y'] > HEIGHT):
                 self.bullets.remove(bullet)
 
-        # Move enemy bullets
+        #
         for bullet in self.enemy_bullets[:]:
             bullet['x'] += bullet['dx'] * self.time_scale
             bullet['y'] += bullet['dy'] * self.time_scale
@@ -265,7 +265,7 @@ class CyberpunkGame(arcade.Window):
                 bullet['y'] < 0 or bullet['y'] > HEIGHT):
                 self.enemy_bullets.remove(bullet)
 
-        # Bullet-enemy collisions
+        # collisioni proiettili
         for bullet in self.bullets[:]:
             for sprite in self.enemy_sprites[:]:
                 if abs(bullet['x'] - sprite.center_x) < 15 and abs(bullet['y'] - sprite.center_y) < 15:
@@ -283,7 +283,7 @@ class CyberpunkGame(arcade.Window):
                     self.bullets.remove(bullet)
                     break
 
-        # Enemy bullet-player collisions
+        
         for bullet in self.enemy_bullets[:]:
             if abs(bullet['x'] - self.player_sprite.center_x) < 13 and abs(bullet['y'] - self.player_sprite.center_y) < 13:
                 self.player_health -= 1
@@ -291,7 +291,7 @@ class CyberpunkGame(arcade.Window):
                 if self.player_health <= 0:
                     self.current_screen = "game_over"
 
-        # Player-enemy collisions
+        # collisioni fisiche player-nemici
         hit_sprites = arcade.check_for_collision_with_list(self.player_sprite, self.enemy_sprites)
         if hit_sprites:
             for sprite in hit_sprites:
@@ -300,14 +300,14 @@ class CyberpunkGame(arcade.Window):
             if self.player_health <= 0:
                 self.current_screen = "game_over"
 
-        # Player-upgrade collisions
+        # collisioni con glu upgrade
         hit_upgrades = arcade.check_for_collision_with_list(self.player_sprite, self.upgrade_sprites)
         for upgrade_sprite in hit_upgrades:
             self.upgrade_sprites.remove(upgrade_sprite)
             self.upgrades_collected.append("velocità")
             self.player_speed += 1
 
-        # Check if room cleared
+        # controlla se la stanza è vuota
         if len(self.enemy_sprites) == 0 and not self.doors_open:
             self.doors_open = True
             # Spawn upgrades
@@ -320,7 +320,7 @@ class CyberpunkGame(arcade.Window):
                 upgrade_sprite.center_y = arcade.rand_in_range(self.room_bottom, self.room_top)
                 self.upgrade_sprites.append(upgrade_sprite)
 
-        # If doors open and player near door, next room (for now, auto after clear)
+        # cambia stanza
         if self.doors_open and len(self.enemy_sprites) == 0:
             if self.current_room < len(self.rooms) - 1:
                 self.current_room += 1
